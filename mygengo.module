@@ -1,0 +1,208 @@
+<?php
+// $Id$
+
+/*
+This file is part of myGengo Drupal plugin.
+
+    myGengo Drupal plugin is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Foobar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+require_once "mygengo-forms.inc";
+require_once "mygengo-ajax.inc";
+require_once "mygengo-plug.inc";
+
+function mygengo_block_info()
+{
+	$blocks[0] = array();
+	$blocks[0]['info'] = t('myGengo Overview');
+	$blocks[0]['region'] = 'dashboard_main';
+	$blocks[0]['status'] = TRUE;
+	$blocks[0]['visibility'] = 1;
+	$blocks[0]['properties'] = array('administrative' => TRUE);
+    
+	return $blocks;
+}
+
+// the only block is the overview block for the dashboard
+function mygengo_block_configure($delta = '') 
+{
+  $form = array();
+  return $form;
+}
+
+function mygengo_block_save($delta = '', $edit = array()) 
+{
+  return;
+}
+
+function mygengo_block_view($delta = '')
+{
+	$ret = array();
+	$ret['subject'] = t("myGengo Overview");
+	$ret['content'] = array('#markup' => mygengo_dashboard());
+		
+	return $ret;
+}
+
+// basic access and admin role
+function mygengo_permission()
+{
+	return array(
+		'access mygengo' => array(
+			'title' => t('Access myGengo service'),
+			'description' => t('Allows the user to submit, view, approve, reject and cancel translations')),
+		'administer mygengo' => array(
+			'title' => t('Administer myGengo'),
+			'description' => t('Allows the user to manage the API and secret key')));
+}
+//array(1) { ["data"]=>  array(4) { ["#type"]=>  string(4) "link" ["#title"]=>  string(4) "edit" ["#href"]=>  string(11) "node/2/edit" ["#options"]=>  array(1) { ["query"]=>  array(1) { ["destination"]=>  string(13) "admin/content" } } } } array(0) { }
+//Skip to main content
+			
+// hook adds 'translate' links into the content menu
+function mygengo_form_node_admin_content_alter(&$form,&$form_state,$form_id)
+{
+	foreach($form['admin']['nodes']['#options'] as $nid => &$node)
+	{
+		if(count($node['operations']) > 0)
+			if(array_key_exists('#links',$node['operations']['data']))
+				$node['operations']['data']['#links']['translate'] = array('title' => t('translate'),'href' => 'mygengo/translate_node/' . $nid); 
+			else 
+				$node['operations']['data'] = array(
+					'#theme' => 'links__node_operations',
+					'#links' => array(
+						'translate' => array(
+							'title' => t('translate'),
+							'href' => 'mygengo/translate_node/' . $nid),
+						$node['operations']['data']['#title'] = array(
+							'title' => $node['operations']['data']['#title'],
+							'href' =>  $node['operations']['data']['#href'],
+							'options' => $node['operations']['data']['#options'])),
+					'#attributes' => array('class' => array('links','inline')));
+	}
+}
+
+// add the menus
+function mygengo_menu() 
+{
+	// admin menu
+	$menu['admin/config/regional/mygengo'] = array(
+		'title' => t("myGengo"),
+		'description' => t("Manage myGengo Cerdientials and administer translation tiers."),
+		'page callback' => "drupal_get_form",
+		'page arguments' => array('mygengo_admin'),
+		'access arguments' => array('administer mygengo'),
+		'type' => MENU_NORMAL_ITEM);
+
+	// plain translation
+	$menu['mygengo/translate_raw'] = array(
+		'title' => t('Translate with myGengo'),
+		'description' => t("Submit content to myGengo for translation."),
+		'page callback' => "drupal_get_form",
+		'page arguments' => array('mygengo_translate_raw'),
+		'access arguments' => array('access mygengo'),
+		'type' => MENU_NORMAL_ITEM);
+
+	// account callback
+	$menu['mygengo/account'] = array(
+		'page callback' => 'mygengo_account',
+		'access arguments' => array('access mygengo'),
+		'type' => MENU_CALLBACK);
+
+	// callback
+	$menu['mygengo/callback'] = array(
+		'page callback'	=> 'mygengo_callback',
+		'access callback' => TRUE,
+		'type' => MENU_CALLBACK);
+
+	// review job form
+	$menu['mygengo/review/%mygengo_job'] = array(
+		'title' => t('Job review'),
+		'page callback' => "drupal_get_form",
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array("mygengo_review",2),
+		'type' => MENU_CALLBACK);
+
+	// get review gif
+	$menu['mygengo/img/%mygengo_job'] = array(
+		'page callback' => 'mygengo_img',
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array(2),
+		'type' => MENU_CALLBACK);
+
+	// rebuild database
+	$menu['mygengo/poll'] = array(
+		'page callback' => 'mygengo_poll',
+		'access arguments' => array('access mygengo'),
+		'type' => MENU_CALLBACK);
+	
+	// cancel available job
+	$menu['mygengo/cancel/%mygengo_job'] = array(
+		'page callback' => 'mygengo_cancel',
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array(2),
+		'type' => MENU_CALLBACK);
+	
+	// view translation
+	$menu['mygengo/view/%mygengo_job'] = array(
+		'title' => t('View job'),
+		'page callback' => "drupal_get_form",
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array("mygengo_view",2),
+		'type' => MENU_CALLBACK);
+			
+	// view comment thread
+	$menu['mygengo/comments/%mygengo_job'] = array(
+		'page callback' => "drupal_get_form",
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array("mygengo_comments",2),
+		'type' => MENU_CALLBACK);
+	
+	// reject form
+	$menu['mygengo/reject/%mygengo_job'] = array(
+		'page callback' => "drupal_get_form",
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array("mygengo_reject",2),
+		'type' => MENU_CALLBACK);
+
+	// correction form
+	$menu['mygengo/correct/%mygengo_job'] = array(
+		'page callback' => "drupal_get_form",
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array("mygengo_correct",2),
+		'type' => MENU_CALLBACK);
+
+	// node translation form
+	$menu['mygengo/translate_node/%node'] = array(
+		'page callback' => "drupal_get_form",
+		'access arguments' => array('access mygengo'),
+		'page arguments' => array("mygengo_translate_node",2),
+		'type' => MENU_CALLBACK);
+
+  return $menu;
+}
+
+// wildcard loader for mygengo jobs
+function mygengo_job_load($jid)
+{
+	if(is_numeric($jid))
+	{
+		$db = db_query('SELECT * FROM {mygengo_jobs} WHERE jid = :jid',array(':jid' => $jid));
+
+		return $db->fetchAssoc();
+	}
+	else
+	{
+		return FALSE;
+	}
+}

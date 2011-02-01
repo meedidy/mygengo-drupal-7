@@ -1,0 +1,32 @@
+myGengo Plugin for Drupal 7
+Copyright (C) 2011, see LICENSE
+
+=== Installation
+Just unpack the zip into your drupal/modules directory and 
+activate the myGengo module in Drupal under <Administration/Modules/Other>.
+
+=== Configuration
+The config page of the module is under <Administration/Configuration/Regional and Language/myGengo>. 
+Fill in the public and private keys. You can find them on your myGengo account page under
+<Account/API settings>. 
+Set the 'Default Callback URL' to http://<domain>/<drupal root>/?q=mygengo/callback or 
+http://<domain>/<drupal root>/mygengo/callback if you use URL rewrting. Save the changes.
+You can delete the local database of jobs and fetch a fresh one with the 'Rebuild database' link.
+Use this sparingly, only if the system somehow desychonized with myGengo!
+
+The module uses two permissions. One to use myGengo for translation (submit, cancel, approve,...)
+and one to admister the settings. To be able to cancel, approve and reject translations a user 
+must be able to see the myGengo Dashboard block.
+
+=== Translate
+Either use the 'Translate with myGengo' menu item or navigate to the content view (admin/content)
+to submit a whole node for translation.
+
+In the translation form add target languages to the job and submit it to myGengo. The job will
+show up on your Dashboard.
+
+=== Administer
+The module adds a block to the Dashboard were you can see all jobs submitted. Depending on the
+status of the job you can review, comment on, view or cancel it with the respective links.
+
+Feb. 2011

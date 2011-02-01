@@ -1,0 +1,137 @@
+<?php
+
+/*
+This file is part of myGengo Drupal plugin.
+
+    myGengo Drupal plugin is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Foobar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+function mygengo_schema()
+{
+	$schema = array();
+	$schema['mygengo_jobs'] = array(
+		'description' => 'Mirrors translation job status.',
+		'fields' => array(
+			'jid' => array(
+				'description' => 'Job ID',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE),
+			'body_src' => array(
+				'description' => 'Original body of text (to be translated).',
+				'type' => 'text',
+				'size' => 'big',
+				'not null' => TRUE),
+			'body_tgt' => array(
+				'description' => 'Translated body of text (if available).',
+				'type' => 'text',
+				'size' => 'big'),
+			'lc_src' => array(
+				'description' => 'Source language code.',
+				'type' => 'text',
+				'size' => 'small',
+				'not null' => TRUE),
+			'lc_tgt' => array(
+				'description' => 'Target language code.',
+				'type' => 'text',
+				'size' => 'small',
+				'not null' => TRUE),
+			'unit_count' => array(
+				'description' => 'Count of source language units (either words or characters depending on source language)',
+				'type' => 'int',
+				'size' => 'medium'),
+			'tier' => array(
+				'description' => 'Quality level ("machine", "standard", "pro", or "ultra")',
+				'type' => 'text',
+				'size' => 'small',
+				'not null' => TRUE),
+			'credits' => array(
+				'description' => 'Credit price based on language pair and tier.',
+				'type' => 'float',
+				'size' => 'medium'),
+			'status' => array(
+				'description' => 'Current status of job. Either "available", "pending", "reviewable", "revising", "approved", or "cancelled".',
+				'type' => 'text',
+				'size' => 'small',
+				'not null' => TRUE),
+			'captcha_url' => array(
+				'description' => 'The full URL to a captcha image, used only if a job is in the "reviewable" state and you wish to reject the job.',
+				'type' => 'text',
+				'size' => 'small'),
+			'preview_url' => array(
+				'description' => 'The full URL to a preview image, used only if a job is in the "reviewable".',
+				'type' => 'text',
+				'size' => 'small'),
+			'slug' => array(
+				'description' => 'Small summary submitted with the job.',
+				'type' => 'text',
+				'size' => 'small'),
+			'ctime' => array(
+				'description' => 'Timestamp for when this job was submitted (by you - not by the translator).',
+				'type' => 'int',
+				'size' => 'normal',
+				'not null' => TRUE),
+			'atime' => array(
+				'description' => 'Timestamp for when this job was last updated. (by the translator).',
+				'type' => 'int',
+				'size' => 'normal',
+				'not null' => TRUE)),
+		'primary key' => array('jid'));
+
+	$schema['mygengo_comments'] = array(
+		'description' => 'Single comment in a {thread}.',
+		'fields' => array(
+			'cid' => array(
+				'description' => 'Comment ID',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE),
+			'jid' => array(
+				'description' => 'Job ID of this comment',
+				'type' => 'int',
+				'size' => 'normal',
+				'not null' => TRUE),
+			'body' => array(
+				'description' => 'Message',
+				'type' => 'text',
+				'size' => 'medium',
+				'not null' => TRUE),
+			'author' => array(
+				'description' => 'Source of the comment. Either "translator", "customer" or "senior translator".',
+				'type' => 'text',
+				'size' => 'small',
+				'not null' => TRUE),
+			'ctime' => array(
+				'description' => 'Timestamp for when this comment was posted by the author.',
+				'type' => 'int',
+				'size' => 'normal',
+				'not null' => TRUE),
+			'new' => array(
+				'description' => 'Saves if this comment was read by you).',
+				'type' => 'int',
+				'size' => 'tiny',
+				'not null' => TRUE,
+				'default' => 1)),
+		'primary key' => array('cid'));
+
+	return $schema;
+}
+
+function mygengo_install()
+{
+}
+
+function mygengo_uninstall()
+{
+}

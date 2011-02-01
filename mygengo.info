@@ -1,0 +1,4 @@
+; $Id$
+name = myGengo translation service
+description = Simple human translation
+core = 7.x
